@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tweet & Reply Generator</title>
+    <!-- load tailwind css for modern and responsive styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* custom styles for font and dark mode base colors */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c; /* dark mode background */
+            color: #e2e8f0; /* light main text */
+        }
+        /* hide scrollbar for textarea if not needed */
+        textarea::-webkit-scrollbar {
+            width: 0px;
+            background: transparent; /* make scrollbar transparent */
+        }
+        textarea {
+            scrollbar-width: none; /* for firefox */
+            background-color: #2d3748; /* dark textarea background */
+            color: #e2e8f0; /* light textarea text */
+            border-color: #4a5568; /* dark textarea border */
+        }
+        textarea::placeholder {
+            color: #a0aec0; /* lighter placeholder text for dark mode */
+        }
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.2); /* lighter spinner */
+            border-left-color: #1da1f2; /* accent color remains blue */
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        /* styles for post type buttons (segmented control) */
+        .post-type-button {
+            padding: 0.6rem 1.2rem; /* py-2.5 px-5, slightly larger */
+            font-weight: 600; /* font-semibold */
+            transition: all 0.2s ease-in-out; /* transition-colors duration-200 */
+            cursor: pointer;
+            border: 1px solid #4a5568; /* dark border */
+            font-size: 1.25rem; /* text-xl, larger */
+            line-height: 1.75rem; /* leading-7 */
+            text-align: center;
+            /* remove flex-grow so it doesn't stretch too wide */
+        }
+        .post-type-button:first-child {
+            border-top-left-radius: 9999px; /* rounded-full */
+            border-bottom-left-radius: 9999px; /* rounded-full */
+            border-right: none; /* remove border in the middle */
+        }
+        .post-type-button:last-child {
+            border-top-right-radius: 9999px; /* rounded-full */
+            border-bottom-right-radius: 9999px; /* rounded-full */
+        }
+        .post-type-button.active {
+            background-color: #1da1f2; /* active blue */
+            color: #fff; /* white text */
+            box-shadow: 0 4px 6px rgba(29, 161, 242, 0.3); /* active shadow */
+            border-color: #1da1f2; /* active border */
+        }
+        .post-type-button:not(.active) {
+            background-color: #2d3748; /* inactive dark background */
+            color: #e2e8f0; /* inactive light text */
+            border-color: #4a5568; /* inactive dark border */
+        }
+        .post-type-button:not(.active):hover {
+            background-color: #4a5568; /* lighter hover in dark mode */
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div class="bg-gray-800 rounded-xl shadow-lg w-full max-w-5xl p-6 md:p-8 space-y-6 text-gray-100">
+        <!-- "Tweet / Reply" buttons at the very top, unified and slightly larger -->
+        <div class="flex justify-center items-center mb-8 rounded-full border border-gray-700 overflow-hidden w-fit mx-auto">
+            <button id="tweetBtn" class="post-type-button">Tweet</button>
+            <button id="replyBtn" class="post-type-button active">Reply</button>
+        </div>
+
+        <!-- main container for two-column layout -->
+        <div class="flex flex-col md:flex-row md:space-x-8 space-y-6 md:space-y-0">
+
+            <!-- left column: input, generate button, and include -->
+            <div class="flex-1 md:w-1/2 space-y-4">
+                <h2 class="text-xl font-semibold text-gray-100">Input</h2>
+                <textarea id="inputText"
+                          class="w-full p-4 border rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm resize-y min-h-[150px]"
+                          placeholder="enter the text you want to reply to here..."></textarea>
+                <div class="text-sm text-gray-400 text-right" id="charCount"></div>
+
+                <!-- "Generate" Button Section -->
+                <div class="space-y-4 pt-4">
+                    <button id="generateBtn"
+                            class="w-full px-6 py-3 bg-blue-500 text-white font-semibold rounded-full hover:bg-blue-600 transition-colors duration-200 flex items-center justify-center gap-2 text-lg">
+                        <span id="buttonText">Generate</span>
+                        <div id="loadingSpinner" class="loading-spinner hidden"></div>
+                    </button>
+                </div>
+
+                <!-- "Include" Section - now a functional textarea -->
+                <div class="space-y-4 pt-4">
+                    <h2 class="text-xl font-semibold text-gray-100">Include (optional)</h2>
+                    <textarea id="includeText"
+                              class="w-full p-4 border border-gray-700 rounded-lg bg-gray-700 text-gray-300 text-base resize-y min-h-[80px]"
+                              placeholder="add hashtags, mentions, or other text here..."></textarea>
+                </div>
+            </div>
+
+            <!-- right column: results -->
+            <div class="flex-1 md:w-1/2 space-y-4">
+                <h2 class="text-xl font-semibold text-gray-100">Results</h2>
+                <div id="outputResultsContainer" class="space-y-4">
+                    <!-- result cards will be loaded here by javascript -->
+                </div>
+                <!-- error or validation messages -->
+                <div id="errorMessage" class="text-red-400 text-center hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // get references to dom elements
+        const inputText = document.getElementById('inputText');
+        const tweetBtn = document.getElementById('tweetBtn');
+        const replyBtn = document.getElementById('replyBtn');
+        let currentPostType = 'reply'; // Variable to store the active post type
+
+        const generateBtn = document.getElementById('generateBtn');
+        const outputResultsContainer = document.getElementById('outputResultsContainer'); // container for multiple results
+        //const charCount = document.getElementById('charCount');
+        const errorMessage = document.getElementById('errorMessage');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const buttonText = document.getElementById('buttonText');
+        const includeText = document.getElementById('includeText'); // Reference to the include textarea
+
+        // prompt for human-like tweet replies
+        const tweetReplyPrompt = `you are an active twitter user who wants to reply to comments in a very human and natural style.
+
+### main rules
+
+* read the post context carefully.
+
+* respond according to the tone and topic being discussed.
+
+* use informal and conversational language.
+
+* occasionally include natural typos or abbreviations (like "ur", "tbh", "ngl", "lol").
+
+* vary sentence length - sometimes short, sometimes long.
+
+* use emojis moderately, not excessively.
+
+* show personal opinion or experience if relevant.
+
+* **keep replies under 25 words maximum.**
+
+### writing style
+
+* start with spontaneous reactions ("oh", "damn", "bruh", "wait").
+
+* use natural punctuation (single periods, ellipses...).
+
+* sometimes skip capitalization at sentence start.
+
+* occasionally use all caps for emphasis.
+
+* use casual slang appropriate to context.
+
+### avoid
+
+* overly formal or stiff language.
+
+* perfect sentence structure.
+
+* excessive emoji use.
+
+* responses that are too long and wordy.
+
+* customer service-like language.
+
+**task:** provide 5 different tweet replies that meet all the above criteria based on the given post context. format your response as a json array of strings.`;
+
+        // prompt for general tweets
+        const tweetGeneralPrompt = `create 5 different short and engaging tweets based on the following text. each tweet should be unique and concise. format your response as a json array of strings.`;
+
+
+        // function to update character count
+        // function updateCharCount() {
+        //     const currentLength = inputText.value.length;
+        //     charCount.textContent = `${currentLength}/280`;
+        //     if (currentLength > 280) {
+        //         charCount.classList.add('text-red-500'); // red color if over limit
+        //     } else {
+        //         charCount.classList.remove('text-red-500'); // revert to gray
+        //     }
+        // }
+
+        // function to create a single output card
+        function createOutputCard(content, isReply) {
+            const card = document.createElement('div');
+            // Adjusting classes for dark mode
+            card.className = 'border border-gray-700 rounded-xl p-4 bg-gray-800 shadow-sm text-gray-100';
+            
+            // Removing user-info and reply-to sections
+            card.innerHTML = `
+                <div class="flex items-start space-x-3">
+                    <div class="flex-1">
+                        <p class="text-sm leading-relaxed">${content}</p>
+                    </div>
+                </div>
+            `;
+            return card;
+        }
+
+        // function to generate post
+        async function generatePost() {
+            const text = inputText.value.trim(); // get text and remove leading/trailing spaces
+            const type = currentPostType; // Use global currentPostType variable
+            const additionalText = includeText.value.trim(); // Get text from include textarea
+
+            // hide previous error messages and clear results container
+            errorMessage.classList.add('hidden');
+            errorMessage.textContent = '';
+            outputResultsContainer.innerHTML = ''; // clear all previous result cards
+
+            // input validation
+            if (text === '') {
+                errorMessage.textContent = 'please enter the text you want to reply to.';
+                errorMessage.classList.remove('hidden');
+                return;
+            }
+
+            // if (text.length > 280) {
+            //     errorMessage.textContent = `text is too long (${text.length} characters). limit is 280 characters.`;
+            //     errorMessage.classList.remove('hidden');
+            //     return;
+            // }
+
+            // show loading spinner
+            loadingSpinner.classList.remove('hidden');
+            buttonText.textContent = 'generating...';
+            generateBtn.disabled = true; // disable button while loading
+
+            let generatedContents = []; // will store an array of string results
+            let promptToSend = '';
+
+            // adjust prompt based on selected post type
+            if (type === 'reply') {
+                promptToSend = `${tweetReplyPrompt}\n\npost context: "${text}"`;
+            } else if (type === 'tweet') {
+                promptToSend = `${tweetGeneralPrompt}\n\ncontext: "${text}"`;
+            }
+
+            // Add additional text from 'include' section to the prompt if available
+            if (additionalText) {
+                promptToSend += `\n\nplease also include these elements: "${additionalText}"`;
+            }
+
+            // call gemini api to generate content
+            let chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: promptToSend }] });
+            const payload = {
+                contents: chatHistory,
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "ARRAY",
+                        items: {
+                            type: "STRING"
+                        }
+                    }
+                }
+            };
+            const apiKey = "AIzaSyArtjknEwXU-Zr7rfTCLiewL4dYAu7K0P0"; // leave empty, canvas will provide this
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+            let retries = 0;
+            const maxRetries = 5;
+            const baseDelay = 1000; // 1 second
+
+            while (retries < maxRetries) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        if (response.status === 429) { // too many requests
+                            const delay = baseDelay * Math.pow(2, retries);
+                            console.warn(`too many requests, retrying in ${delay / 1000}s...`);
+                            await new Promise(resolve => setTimeout(resolve, delay));
+                            retries++;
+                            continue;
+                        } else {
+                            throw new Error(`http error! status: ${response.status}`);
+                        }
+                    }
+
+                    const result = await response.json();
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const jsonString = result.candidates[0].content.parts[0].text;
+                        try {
+                            generatedContents = JSON.parse(jsonString);
+                            if (!Array.isArray(generatedContents)) {
+                                throw new Error('response is not a json array.');
+                            }
+                            break; // exit loop if successful
+                        } catch (parseError) {
+                            throw new Error(`json parsing error: ${parseError.message} - response: ${jsonString}`);
+                        }
+                    } else {
+                        throw new Error('unexpected api response structure or missing content.');
+                    }
+                } catch (error) {
+                    console.error('error calling gemini api:', error);
+                    errorMessage.textContent = 'failed to generate content. please try again.';
+                    errorMessage.classList.remove('hidden');
+                    break; // exit loop on non-429 error
+                }
+            }
+
+            if (generatedContents.length === 0) {
+                errorMessage.textContent = 'failed to generate content after multiple retries.';
+                errorMessage.classList.remove('hidden');
+            }
+
+            // hide loading spinner
+            loadingSpinner.classList.add('hidden');
+            buttonText.textContent = 'Generate';
+            generateBtn.disabled = false; // re-enable button
+
+            // display output cards if content was generated
+            if (generatedContents.length > 0) {
+                generatedContents.forEach(content => {
+                    const card = createOutputCard(content, type === 'reply');
+                    outputResultsContainer.appendChild(card);
+                });
+            }
+        }
+
+        // Function to manage active state of post type buttons
+        function setActivePostTypeButton(type) {
+            currentPostType = type;
+            if (type === 'tweet') {
+                tweetBtn.classList.add('active');
+                replyBtn.classList.remove('active');
+                buttonText.textContent = 'Generate'; // Update button text
+            } else {
+                tweetBtn.classList.remove('active');
+                replyBtn.classList.add('active');
+                buttonText.textContent = 'Generate'; // Update button text
+            }
+            // If there's text in the input, re-generate content
+            if (inputText.value.length > 0) {
+                generatePost();
+            }
+        }
+
+        // Add event listener for tweet button
+        tweetBtn.addEventListener('click', function() {
+            setActivePostTypeButton('tweet');
+        });
+
+        // Add event listener for reply button
+        replyBtn.addEventListener('click', function() {
+            setActivePostTypeButton('reply');
+        });
+
+        // Add event listener for text input (for typing and pasting)
+        inputText.addEventListener('input', function() {
+            updateCharCount(); // always update character count
+
+            // If there's text and the post type is 'reply', auto-generate
+            // Automation only applies if the type is 'reply'
+            if (inputText.value.length > 0 && currentPostType === 'reply') {
+                generatePost();
+            } else if (inputText.value.length === 0) {
+                // if text is cleared, hide all output cards
+                outputResultsContainer.innerHTML = '';
+                errorMessage.classList.add('hidden');
+            }
+        });
+
+        // Add event listener for include textarea to re-generate if changes occur
+        includeText.addEventListener('input', function() {
+            if (inputText.value.length > 0) {
+                generatePost();
+            }
+        });
+
+        // Add event listener for the "Generate" button (if user wants to click manually)
+        generateBtn.addEventListener('click', generatePost);
+
+        // Initialize character count and button state on page load
+        updateCharCount();
+        setActivePostTypeButton('reply'); // Set default to 'reply' on load
+    </script>
+</body>
+</html>
