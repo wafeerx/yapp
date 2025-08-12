@@ -9,7 +9,7 @@
     <style>
         /* custom styles for font and dark mode base colors */
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'inter', sans-serif;
             background-color: #1a202c; /* dark mode background */
             color: #e2e8f0; /* light main text */
         }
@@ -73,12 +73,20 @@
         .post-type-button:not(.active):hover {
             background-color: #4a5568; /* lighter hover in dark mode */
         }
+        .clear-button {
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+        .clear-button:hover {
+            color: #ef4444; /* red on hover */
+        }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
 
     <div class="bg-gray-800 rounded-xl shadow-lg w-full max-w-5xl p-6 md:p-8 space-y-6 text-gray-100">
-        <!-- "Tweet / Reply" buttons at the very top, unified and slightly larger -->
+        <!-- "tweet / reply" buttons at the very top, unified and slightly larger -->
         <div class="flex justify-center items-center mb-8 rounded-full border border-gray-700 overflow-hidden w-fit mx-auto">
             <button id="tweetBtn" class="post-type-button">Tweet</button>
             <button id="replyBtn" class="post-type-button active">Reply</button>
@@ -88,33 +96,60 @@
         <div class="flex flex-col md:flex-row md:space-x-8 space-y-6 md:space-y-0">
 
             <!-- left column: input, generate button, and include -->
-            <div class="flex-1 md:w-1/2 space-y-4">
-                <h2 class="text-xl font-semibold text-gray-100">Input</h2>
-                <textarea id="inputText"
-                          class="w-full p-4 border rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm resize-y min-h-[150px]"
-                          placeholder="enter the text you want to reply to here..."></textarea>
+            <div class="md:w-1/2 space-y-4">
+                <h2 id="originalTweetTitle" class="text-xl font-semibold text-gray-100">Main Tweet</h2>
+                <!-- new input for the original tweet -->
+                <div class="relative">
+                    <textarea id="originalTweetText"
+                              class="w-full p-4 border rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm resize-y min-h-[150px]"
+                              placeholder="enter the main tweet here..."></textarea>
+                    <button id="clearOriginalTweetBtn" class="clear-button absolute top-2 right-2 text-gray-400 hover:text-red-500 hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <h2 id="inputReplyTitle" class="text-xl font-semibold text-gray-100 mt-6">Reply</h2>
+                <div class="relative">
+                    <textarea id="inputText"
+                              class="w-full p-4 border rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm resize-y min-h-[100px]"
+                              placeholder="enter the other person's reply here (optional)..."></textarea>
+                    <button id="clearInputTextBtn" class="clear-button absolute top-2 right-2 text-gray-400 hover:text-red-500 hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
                 <div class="text-sm text-gray-400 text-right" id="charCount"></div>
 
-                <!-- "Generate" Button Section -->
+                <!-- "generate" button section -->
                 <div class="space-y-4 pt-4">
                     <button id="generateBtn"
                             class="w-full px-6 py-3 bg-blue-500 text-white font-semibold rounded-full hover:bg-blue-600 transition-colors duration-200 flex items-center justify-center gap-2 text-lg">
-                        <span id="buttonText">Generate</span>
+                        <span id="buttonText">generate</span>
                         <div id="loadingSpinner" class="loading-spinner hidden"></div>
                     </button>
                 </div>
 
-                <!-- "Include" Section - now a functional textarea -->
+                <!-- "include" section - now a functional textarea -->
                 <div class="space-y-4 pt-4">
-                    <h2 class="text-xl font-semibold text-gray-100">Include (optional)</h2>
-                    <textarea id="includeText"
-                              class="w-full p-4 border border-gray-700 rounded-lg bg-gray-700 text-gray-300 text-base resize-y min-h-[80px]"
-                              placeholder="add hashtags, mentions, or other text here..."></textarea>
+                    <h2 class="text-xl font-semibold text-gray-100">include (optional)</h2>
+                    <div class="relative">
+                        <textarea id="includeText"
+                                  class="w-full p-4 border border-gray-700 rounded-lg bg-gray-700 text-gray-300 text-base resize-y min-h-[80px]"
+                                  placeholder="Add hashtags, mentions, or other text here..."></textarea>
+                        <button id="clearIncludeTextBtn" class="clear-button absolute top-2 right-2 text-gray-400 hover:text-red-500 hidden">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
 
             <!-- right column: results -->
-            <div class="flex-1 md:w-1/2 space-y-4">
+            <div class="md:w-1/2 space-y-4">
                 <h2 class="text-xl font-semibold text-gray-100">Results</h2>
                 <div id="outputResultsContainer" class="space-y-4">
                     <!-- result cards will be loaded here by javascript -->
@@ -128,17 +163,25 @@
     <script>
         // get references to dom elements
         const inputText = document.getElementById('inputText');
+        const originalTweetText = document.getElementById('originalTweetText'); // new element
+        const originalTweetTitle = document.getElementById('originalTweetTitle');
+        const inputReplyTitle = document.getElementById('inputReplyTitle');
         const tweetBtn = document.getElementById('tweetBtn');
         const replyBtn = document.getElementById('replyBtn');
-        let currentPostType = 'reply'; // Variable to store the active post type
+        let currentPostType = 'reply'; // variable to store the active post type
 
         const generateBtn = document.getElementById('generateBtn');
         const outputResultsContainer = document.getElementById('outputResultsContainer'); // container for multiple results
-        //const charCount = document.getElementById('charCount');
+        const charCount = document.getElementById('charCount');
         const errorMessage = document.getElementById('errorMessage');
         const loadingSpinner = document.getElementById('loadingSpinner');
         const buttonText = document.getElementById('buttonText');
-        const includeText = document.getElementById('includeText'); // Reference to the include textarea
+        const includeText = document.getElementById('includeText'); // reference to the include textarea
+
+        // new clear buttons
+        const clearOriginalTweetBtn = document.getElementById('clearOriginalTweetBtn');
+        const clearInputTextBtn = document.getElementById('clearInputTextBtn');
+        const clearIncludeTextBtn = document.getElementById('clearIncludeTextBtn');
 
         // prompt for human-like tweet replies
         const tweetReplyPrompt = `you are an active twitter user who wants to reply to comments in a very human and natural style.
@@ -159,7 +202,7 @@
 
 * show personal opinion or experience if relevant.
 
-* **keep replies under 25 words maximum.**
+* **keep replies under 55 words maximum.**
 
 ### writing style
 
@@ -179,7 +222,7 @@
 
 * perfect sentence structure.
 
-* excessive emoji use.
+* excessive emoji use and the “!” symbol.
 
 * responses that are too long and wordy.
 
@@ -192,23 +235,28 @@
 
 
         // function to update character count
-        // function updateCharCount() {
-        //     const currentLength = inputText.value.length;
-        //     charCount.textContent = `${currentLength}/280`;
-        //     if (currentLength > 280) {
-        //         charCount.classList.add('text-red-500'); // red color if over limit
-        //     } else {
-        //         charCount.classList.remove('text-red-500'); // revert to gray
-        //     }
-        // }
+        function updateCharCount() {
+            const currentLength = inputText.value.length;
+            charCount.textContent = `${currentLength}/280`;
+            if (currentLength > 280) {
+                charCount.classList.add('text-red-500'); // red color if over limit
+            } else {
+                charCount.classList.remove('text-red-500'); // revert to gray
+            }
+
+            // show/hide clear buttons
+            clearOriginalTweetBtn.classList.toggle('hidden', originalTweetText.value.length === 0);
+            clearInputTextBtn.classList.toggle('hidden', inputText.value.length === 0);
+            clearIncludeTextBtn.classList.toggle('hidden', includeText.value.length === 0);
+        }
 
         // function to create a single output card
         function createOutputCard(content, isReply) {
             const card = document.createElement('div');
-            // Adjusting classes for dark mode
+            // adjusting classes for dark mode
             card.className = 'border border-gray-700 rounded-xl p-4 bg-gray-800 shadow-sm text-gray-100';
             
-            // Removing user-info and reply-to sections
+            // removing user-info and reply-to sections
             card.innerHTML = `
                 <div class="flex items-start space-x-3">
                     <div class="flex-1">
@@ -222,8 +270,9 @@
         // function to generate post
         async function generatePost() {
             const text = inputText.value.trim(); // get text and remove leading/trailing spaces
-            const type = currentPostType; // Use global currentPostType variable
-            const additionalText = includeText.value.trim(); // Get text from include textarea
+            const originalTweet = originalTweetText.value.trim(); // new: get text from original tweet input
+            const type = currentPostType; // use global currentposttype variable
+            const additionalText = includeText.value.trim(); // get text from include textarea
 
             // hide previous error messages and clear results container
             errorMessage.classList.add('hidden');
@@ -231,17 +280,16 @@
             outputResultsContainer.innerHTML = ''; // clear all previous result cards
 
             // input validation
-            if (text === '') {
-                errorMessage.textContent = 'please enter the text you want to reply to.';
+            if (type === 'tweet' && text === '') {
+                errorMessage.textContent = 'please enter the text you want to use for the tweet.';
                 errorMessage.classList.remove('hidden');
                 return;
             }
-
-            // if (text.length > 280) {
-            //     errorMessage.textContent = `text is too long (${text.length} characters). limit is 280 characters.`;
-            //     errorMessage.classList.remove('hidden');
-            //     return;
-            // }
+            if (type === 'reply' && originalTweet === '' && text === '') {
+                 errorMessage.textContent = 'please enter a main tweet or a reply you want to respond to.';
+                 errorMessage.classList.remove('hidden');
+                 return;
+            }
 
             // show loading spinner
             loadingSpinner.classList.remove('hidden');
@@ -253,13 +301,20 @@
 
             // adjust prompt based on selected post type
             if (type === 'reply') {
-                promptToSend = `${tweetReplyPrompt}\n\npost context: "${text}"`;
+                let context = `original tweet: "${originalTweet}"\ncomment to reply to: "${text}"`;
+                if (originalTweet === '') {
+                    // if no original tweet is provided, just use the main text
+                    context = `post context: "${text}"`;
+                }
+                promptToSend = `${tweetReplyPrompt}\n\npost context: "${context}"`;
             } else if (type === 'tweet') {
                 promptToSend = `${tweetGeneralPrompt}\n\ncontext: "${text}"`;
             }
 
-            // Add additional text from 'include' section to the prompt if available
+            // add additional text from 'include' section to the prompt if available
             if (additionalText) {
+
+                const formattedAdditionalText = additionalText.split(',').map(item => item.trim()).join(' ');
                 promptToSend += `\n\nplease also include these elements: "${additionalText}"`;
             }
 
@@ -278,7 +333,7 @@
                     }
                 }
             };
-            const apiKey = "AIzaSyArtjknEwXU-Zr7rfTCLiewL4dYAu7K0P0"; // leave empty, canvas will provide this
+            const apiKey = "AIzaSyD3gbFc7CrWcfdRQxkNRg9RknKVuvikvqA"; // leave empty, canvas will provide this
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
             let retries = 0;
@@ -289,7 +344,7 @@
                 try {
                     const response = await fetch(apiUrl, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'content-type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
 
@@ -324,20 +379,20 @@
                     }
                 } catch (error) {
                     console.error('error calling gemini api:', error);
-                    errorMessage.textContent = 'failed to generate content. please try again.';
+                    errorMessage.textContent = 'failed to create content. please try again.';
                     errorMessage.classList.remove('hidden');
                     break; // exit loop on non-429 error
                 }
             }
 
             if (generatedContents.length === 0) {
-                errorMessage.textContent = 'failed to generate content after multiple retries.';
+                errorMessage.textContent = 'failed to create content after multiple retries.';
                 errorMessage.classList.remove('hidden');
             }
 
             // hide loading spinner
             loadingSpinner.classList.add('hidden');
-            buttonText.textContent = 'Generate';
+            buttonText.textContent = 'generate';
             generateBtn.disabled = false; // re-enable button
 
             // display output cards if content was generated
@@ -349,62 +404,86 @@
             }
         }
 
-        // Function to manage active state of post type buttons
+        // function to manage active state of post type buttons
         function setActivePostTypeButton(type) {
             currentPostType = type;
             if (type === 'tweet') {
                 tweetBtn.classList.add('active');
                 replyBtn.classList.remove('active');
-                buttonText.textContent = 'Generate'; // Update button text
+                buttonText.textContent = 'Generate'; // update button text
+                originalTweetTitle.textContent = 'Input tweet'; // change title
+                originalTweetText.placeholder = 'Enter your tweet text here...';
+                inputReplyTitle.textContent = 'Tweet Ideas'; // change title
+                inputText.placeholder = 'Enter ideas, topics, or keywords for the tweet...';
+                
             } else {
                 tweetBtn.classList.remove('active');
                 replyBtn.classList.add('active');
-                buttonText.textContent = 'Generate'; // Update button text
+                buttonText.textContent = 'Generate'; // update button text
+                originalTweetTitle.textContent = 'Main Tweet'; // change title
+                originalTweetText.placeholder = 'Enter the main tweet here...';
+                inputReplyTitle.textContent = 'Other Reply'; // change title
+                inputText.placeholder = 'Enter the other reply here (optional)...';
             }
-            // If there's text in the input, re-generate content
-            if (inputText.value.length > 0) {
+        
+            // if there's text in the input, re-generate content
+            if (inputText.value.length > 0 || originalTweetText.value.length > 0) {
                 generatePost();
+            } else {
+                outputResultsContainer.innerHTML = '';
             }
         }
 
-        // Add event listener for tweet button
+        // add event listener for clear buttons
+        clearOriginalTweetBtn.addEventListener('click', () => { originalTweetText.value = ''; updateCharCount(); generatePost(); });
+        clearInputTextBtn.addEventListener('click', () => { inputText.value = ''; updateCharCount(); generatePost(); });
+        clearIncludeTextBtn.addEventListener('click', () => { includeText.value = ''; updateCharCount(); generatePost(); });
+
+        // add event listener for tweet button
         tweetBtn.addEventListener('click', function() {
             setActivePostTypeButton('tweet');
         });
 
-        // Add event listener for reply button
+        // add event listener for reply button
         replyBtn.addEventListener('click', function() {
             setActivePostTypeButton('reply');
         });
 
-        // Add event listener for text input (for typing and pasting)
+        // add event listener for text input (for typing and pasting)
         inputText.addEventListener('input', function() {
             updateCharCount(); // always update character count
-
-            // If there's text and the post type is 'reply', auto-generate
-            // Automation only applies if the type is 'reply'
-            if (inputText.value.length > 0 && currentPostType === 'reply') {
+            if (inputText.value.length > 0 || originalTweetText.value.length > 0) {
                 generatePost();
-            } else if (inputText.value.length === 0) {
-                // if text is cleared, hide all output cards
+            } else {
                 outputResultsContainer.innerHTML = '';
                 errorMessage.classList.add('hidden');
             }
         });
 
-        // Add event listener for include textarea to re-generate if changes occur
+        // add event listener for original tweet input
+        originalTweetText.addEventListener('input', function() {
+            updateCharCount();
+            if (inputText.value.length > 0 || originalTweetText.value.length > 0) {
+                generatePost();
+            } else {
+                outputResultsContainer.innerHTML = '';
+                errorMessage.classList.add('hidden');
+            }
+        });
+
+        // add event listener for include textarea to re-generate if changes occur
         includeText.addEventListener('input', function() {
-            if (inputText.value.length > 0) {
+            if (inputText.value.length > 0 || originalTweetText.value.length > 0) {
                 generatePost();
             }
         });
 
-        // Add event listener for the "Generate" button (if user wants to click manually)
+        // add event listener for the "generate" button (if user wants to click manually)
         generateBtn.addEventListener('click', generatePost);
 
-        // Initialize character count and button state on page load
+        // initialize character count and button state on page load
         updateCharCount();
-        setActivePostTypeButton('reply'); // Set default to 'reply' on load
+        setActivePostTypeButton('reply'); // set default to 'reply' on load
     </script>
 </body>
 </html>
