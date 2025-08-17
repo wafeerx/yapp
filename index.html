@@ -315,7 +315,7 @@
             if (additionalText) {
 
                 const formattedAdditionalText = additionalText.split(',').map(item => item.trim()).join(' ');
-                promptToSend += `\n\nplease also include these elements: "${additionalText}"`;
+                promptToSend += `\n\nplease also include these elements: "${additionalText}" somewhere naturally within the tweet, not just at the end.`;
             }
 
             // call gemini api to generate content
@@ -398,6 +398,13 @@
             // display output cards if content was generated
             if (generatedContents.length > 0) {
                 generatedContents.forEach(content => {
+                    let finalContent = content;
+                    if (additionalText) {
+                        const words = content.split(' ');
+                        const randomIndex = Math.floor(Math.random() * (words.length - 1)) + 1;
+                        words.splice(randomIndex, 0, additionalText);
+                        finalContent = words.join(' ');
+                    }
                     const card = createOutputCard(content, type === 'reply');
                     outputResultsContainer.appendChild(card);
                 });
