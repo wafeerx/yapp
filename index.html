@@ -194,7 +194,7 @@
 
 * use informal and conversational language.
 
-* occasionally include natural typos or abbreviations (like "ur", "tbh", "ngl", "lol").
+* occasionally include natural typos or abbreviations.
 
 * vary sentence length - sometimes short, sometimes long.
 
@@ -202,11 +202,11 @@
 
 * show personal opinion or experience if relevant.
 
-* **keep replies under 45 words maximum.**
+* **keep replies under 40 words maximum.**
 
 ### writing style
 
-* start with spontaneous reactions ("oh", "damn", "bruh", "wait").
+* start with spontaneous reactions.
 
 * use natural punctuation (single periods, ellipses...).
 
@@ -314,8 +314,9 @@
             // add additional text from 'include' section to the prompt if available
             if (additionalText) {
 
-                const formattedAdditionalText = additionalText.split(',').map(item => item.trim()).join(' ');
-                promptToSend += `\n\nplease also include these elements: "${additionalText}" by seamlessly embedding them inside a sentence. do not put them at the start or end of the tweet.`;
+                const additionalElements = additionalText.split(',').map(item => item.trim());
+                additionalElements.forEach(element => {
+                promptToSend += `\n\nplease include this element: "${element}" somewhere in the middle of a sentence.`;});
             }
 
             // call gemini api to generate content
