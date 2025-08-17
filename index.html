@@ -315,7 +315,7 @@
             if (additionalText) {
 
                 const formattedAdditionalText = additionalText.split(',').map(item => item.trim()).join(' ');
-                promptToSend += `\n\nplease also include these elements: "${additionalText}" somewhere naturally within the tweet, not just at the end.`;
+                promptToSend += `\n\nplease also include these elements: "${additionalText}" by seamlessly embedding them inside a sentence. do not put them at the start or end of the tweet.`;
             }
 
             // call gemini api to generate content
